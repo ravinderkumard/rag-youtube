@@ -22,7 +22,13 @@ Composed of 2 project:
 ---
 ## Prerequisites
 - [Docker](https://www.docker.com/get-started) installed on your system  
-- [Docker Compose](https://docs.docker.com/compose/) installed  
+- [Docker Compose](https://docs.docker.com/compose/) installed
+- Requirements
+    * Python 3.8+
+    * OpenAI API key
+    * YouTubeTranscriptApi
+    * LangChain
+    * FAISS
 
 ---
 

@@ -39,3 +39,9 @@ OPENAI_API_KEY=your_openai_key_here
 
 ## Build and Run with Docker Compose
 docker-compose up --build
+
+
+## Demo
+1. Launch Page: http://localhost:3000/
+   <img width="593" height="285" alt="image" src="https://github.com/user-attachments/assets/c71270cc-ed70-4147-b0ef-960533a81e38" />
+

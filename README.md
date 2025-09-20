@@ -62,4 +62,7 @@ docker-compose up --build
    <img width="593" height="285" alt="image" src="https://github.com/user-attachments/assets/c71270cc-ed70-4147-b0ef-960533a81e38" />
 
 ## Adding Deployment flow to AWS
-1. Create a AWS infrastructure using Terraform
+1. Create a AWS infrastructure using Terraform.
+2. terraform init
+3. terraform apply
+4. 

@@ -8,6 +8,15 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      ECR_BACKEND_URL: ${{ secrets.ECR_BACKEND_URL }}
+      ECR_FRONTEND_URL: ${{ secrets.ECR_FRONTEND_URL }}
+      ECS_CLUSTER_NAME: ${{ secrets.ECS_CLUSTER_NAME }}
+      ECS_SERVICE_NAME: ${{ secrets.ECS_SERVICE_NAME }}
+      ALB_DNS: ${{ secrets.ALB_DNS }} # Add ALB DNS as a secret
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -19,23 +28,41 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Build and Push Backend Docker Image
+      # ---------------------------
+      # Backend
+      # ---------------------------
+      - name: Login to ECR Backend
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_BACKEND_URL
+
+      - name: Build & Push Backend Docker Image
         run: |
           docker build -t rag-backend ./backend
-          docker tag rag-backend:latest ${{ secrets.ECR_BACKEND_URL }}:latest
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_BACKEND_URL }}
-          docker push ${{ secrets.ECR_BACKEND_URL }}:latest
+          docker tag rag-backend:latest $ECR_BACKEND_URL:latest
+          docker push $ECR_BACKEND_URL:latest
 
-      - name: Build and Push Frontend Docker Image
+      # ---------------------------
+      # Frontend
+      # ---------------------------
+      - name: Set NEXT_PUBLIC_API_URL for frontend
+        run: echo "NEXT_PUBLIC_API_URL=http://${ALB_DNS}:18000" >> $GITHUB_ENV
+
+      - name: Login to ECR Frontend
         run: |
-          docker build -t rag-frontend ./frontend
-          docker tag rag-frontend:latest ${{ secrets.ECR_FRONTEND_URL }}:latest
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_FRONTEND_URL }}
-          docker push ${{ secrets.ECR_FRONTEND_URL }}:latest
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_FRONTEND_URL
 
+      - name: Build & Push Frontend Docker Image
+        run: |
+          docker build --build-arg NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL -t rag-frontend ./frontend
+          docker tag rag-frontend:latest $ECR_FRONTEND_URL:latest
+          docker push $ECR_FRONTEND_URL:latest
+
+      # ---------------------------
+      # ECS Deployment
+      # ---------------------------
       - name: Update ECS Service (Force New Deployment)
         run: |
           aws ecs update-service \
-            --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-            --service ${{ secrets.ECS_SERVICE_NAME }} \
+            --cluster $ECS_CLUSTER_NAME \
+            --service $ECS_SERVICE_NAME \
             --force-new-deployment

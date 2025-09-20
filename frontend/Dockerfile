@@ -1,16 +1,13 @@
-# Frontend Dockerfile
 FROM node:18-alpine AS builder
-
 WORKDIR /app
 
-# Copy package.json only
-COPY frontend/package.json ./
+# Copy package.json from the context (./frontend)
+COPY package.json ./
 RUN npm install
 
-# Copy remaining frontend files
-COPY frontend/ ./
+# Copy all frontend files
+COPY . .
 
-# Build with environment variable
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 

@@ -7,13 +7,12 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm install
 
-<<<<<<< HEAD
 # Copy the rest of the frontend code
 COPY . .
-=======
+
 # Copy rest of the code
-COPY frontend/ .
->>>>>>> 4847b4f (Add terraform script)
+#COPY frontend/ .
+
 
 # Pass API URL as build argument
 ARG NEXT_PUBLIC_API_URL

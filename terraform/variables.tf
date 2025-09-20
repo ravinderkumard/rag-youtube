@@ -27,3 +27,9 @@ variable "existing_alb_sg_id" {
   description = "Existing ALB security group ID (optional)"
   default     = ""
 }
+
+variable "region" {
+  description = "AWS region for deployment"
+  type        = string
+  default     = "us-east-1"
+}

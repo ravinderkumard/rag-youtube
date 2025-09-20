@@ -1,4 +1,16 @@
 # -------------------------
+# CloudWatch Log Group
+# -------------------------
+resource "aws_cloudwatch_log_group" "rag_logs" {
+  name              = "/ecs/rag-service"
+  retention_in_days = 7
+
+  tags = {
+    Name = "rag-service-logs"
+  }
+}
+
+# -------------------------
 # ECS Cluster
 # -------------------------
 resource "aws_ecs_cluster" "rag_cluster" {
@@ -35,6 +47,14 @@ resource "aws_ecs_task_definition" "rag_task" {
         retries     = 3
         startPeriod = 10
       }
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = "/ecs/rag-service"
+          awslogs-region        = var.region
+          awslogs-stream-prefix = "backend"
+        }
+      }
     },
     {
       name      = "frontend"
@@ -58,6 +78,14 @@ resource "aws_ecs_task_definition" "rag_task" {
         timeout     = 5
         retries     = 3
         startPeriod = 10
+      }
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = "/ecs/rag-service"
+          awslogs-region        = var.region
+          awslogs-stream-prefix = "frontend"
+        }
       }
     }
   ])
@@ -99,6 +127,7 @@ resource "aws_ecs_service" "rag_service" {
   }
 
   depends_on = [
+    aws_cloudwatch_log_group.rag_logs,
     aws_lb_listener.rag_backend_listener,
     aws_lb_listener.rag_frontend_listener,
     aws_ecs_task_definition.rag_task

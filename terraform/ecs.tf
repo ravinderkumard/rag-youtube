@@ -40,6 +40,12 @@ resource "aws_ecs_task_definition" "rag_task" {
           protocol      = "tcp"
         }
       ]
+      command = [
+        "uvicorn", "main:app",
+        "--host", "0.0.0.0",
+        "--port", "18000",
+        "--access-log"
+      ]
       healthCheck = {
         command     = ["CMD-SHELL", "curl -f http://localhost:18000/ || exit 1"]
         interval    = 30
@@ -50,7 +56,7 @@ resource "aws_ecs_task_definition" "rag_task" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group         = "/ecs/rag-service"
+          awslogs-group         = aws_cloudwatch_log_group.rag_logs.name
           awslogs-region        = var.region
           awslogs-stream-prefix = "backend"
         }
@@ -82,7 +88,7 @@ resource "aws_ecs_task_definition" "rag_task" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group         = "/ecs/rag-service"
+          awslogs-group         = aws_cloudwatch_log_group.rag_logs.name
           awslogs-region        = var.region
           awslogs-stream-prefix = "frontend"
         }

@@ -1,24 +1,21 @@
 # Use official Node.js image
 FROM node:18-alpine
 
+# Set working directory
 WORKDIR /app
 
-# Copy package files and install dependencies
-COPY package.json package-lock.json ./
+# Install dependencies
+COPY frontend/package.json frontend/package-lock.json ./
 RUN npm install
 
-# Copy the rest of the frontend code
+# Copy frontend code
 COPY . .
 
-# Copy rest of the code
-#COPY frontend/ .
-
-
-# Pass API URL as build argument
+# Build argument for backend URL
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
-# Build the Next.js app
+# Build Next.js app
 RUN npm run build
 
 # Expose frontend port

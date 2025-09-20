@@ -9,13 +9,17 @@ export default function QueryForm() {
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Read backend URL from environment variable
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://backend:18000";
+  // Base API URL from environment variable
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:18000";
 
   const handleIndex = async () => {
+    if (!videoId) {
+      alert("Please enter a YouTube Video ID");
+      return;
+    }
     setLoading(true);
     try {
-      await axios.post(`${backendUrl}/api/index`, null, {
+      await axios.post(`${API_BASE_URL}/api/index`, null, {
         params: { video_id: videoId },
       });
       alert("Video indexed successfully!");
@@ -27,9 +31,13 @@ export default function QueryForm() {
   };
 
   const handleQuery = async () => {
+    if (!question) {
+      alert("Please enter a question");
+      return;
+    }
     setLoading(true);
     try {
-      const res = await axios.post(`${backendUrl}/api/query`, null, {
+      const res = await axios.post(`${API_BASE_URL}/api/query`, null, {
         params: { question },
       });
       setAnswer(res.data.answer);
@@ -43,7 +51,7 @@ export default function QueryForm() {
   return (
     <div className="max-w-xl mx-auto mt-10 p-4 border rounded-lg shadow">
       <h1 className="text-xl font-bold mb-4">YouTube RAG Chat</h1>
-      
+
       <input
         type="text"
         placeholder="Enter YouTube Video ID"

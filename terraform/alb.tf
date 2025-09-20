@@ -129,7 +129,7 @@ resource "aws_lb_listener" "rag_frontend_listener" {
   }
 }
 
-# --------------------------
+# -------------------------
 # Listener for Backend (Port 18000)
 # -------------------------
 resource "aws_lb_listener" "rag_backend_listener" {

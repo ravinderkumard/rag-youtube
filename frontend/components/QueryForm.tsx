@@ -10,7 +10,11 @@ export default function QueryForm() {
   const [loading, setLoading] = useState(false);
 
   // Base API URL from environment variable
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:18000";
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+  if (!API_BASE_URL) {
+    console.error("NEXT_PUBLIC_API_URL is not defined");
+    throw new Error("NEXT_PUBLIC_API_URL is not defined");
+  }
 
   const handleIndex = async () => {
     if (!videoId) {

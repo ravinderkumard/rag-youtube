@@ -9,14 +9,18 @@ export default function QueryForm() {
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Read backend URL from environment variable
+  const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://backend:18000";
+
   const handleIndex = async () => {
     setLoading(true);
     try {
-      await axios.post(`/api/index`, null, {
+      await axios.post(`${backendUrl}/api/index`, null, {
         params: { video_id: videoId },
       });
       alert("Video indexed successfully!");
     } catch (err) {
+      console.error(err);
       alert("Error indexing video");
     }
     setLoading(false);
@@ -25,11 +29,12 @@ export default function QueryForm() {
   const handleQuery = async () => {
     setLoading(true);
     try {
-      const res = await axios.post(`/api/query`, null, {
+      const res = await axios.post(`${backendUrl}/api/query`, null, {
         params: { question },
       });
       setAnswer(res.data.answer);
     } catch (err) {
+      console.error(err);
       alert("Error querying video");
     }
     setLoading(false);

@@ -5,3 +5,7 @@
 
 *__pycache__*
 *faiss_index*
+
+*terraform*
+*terraform.*
+.terraform

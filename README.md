@@ -62,7 +62,192 @@ docker-compose up --build
    <img width="593" height="285" alt="image" src="https://github.com/user-attachments/assets/c71270cc-ed70-4147-b0ef-960533a81e38" />
 
 ## Adding Deployment flow to AWS
-1. Create a AWS infrastructure using Terraform.
-2. terraform init
-3. terraform apply
-4.  abc
+
+For Deployment flow to AWS, please refer to the `terraform` folder in the repository. It contains Terraform scripts to set up the necessary AWS infrastructure, including VPC, subnets, security groups, and an Application Load Balancer (ALB).
+Make sure to adjust the variables in `variables.tf` as needed before applying the Terraform configuration.
+
+### Why Terraform?
+Terraform is an Infrastructure as Code (IaC) tool that allows you to define and provision infrastructure using a high-level configuration language. It is particularly useful for managing cloud resources in a consistent and repeatable manner.
+
+### Benefits of Using Terraform
+- **Version Control**: Infrastructure definitions can be versioned and stored in source control.
+- **Automation**: Automate the provisioning and management of infrastructure.
+- **Consistency**: Ensure consistent environments across development, testing, and production.
+- **Modularity**: Reuse and share configurations easily.
+
+### Terraform Setup
+1. Navigate to the `terraform` directory:
+   ```bash
+   cd terraform
+   ```
+2. Initialize Terraform:
+   ```bash
+   terraform init
+   ```
+3. Review the plan:
+   ```bash
+   terraform plan
+   ```
+4. Apply the configuration:
+   ```bash
+   terraform apply
+   ```  
+
+## Notes
+- Ensure your OpenAI API key is kept secure and not hard-coded in the source code.
+- The FAISS index is stored locally in the backend container; consider using persistent storage for production.
+- This is a basic implementation; further enhancements can include user authentication, improved error handling, and support for more video platforms.
+
+## Github Actions
+The repository includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) that automates the deployment process to AWS using Terraform. This workflow is triggered on pushes to the `main` branch and performs the following steps:
+- Checks out the repository code.
+- Sets up Terraform.
+- Initializes Terraform.
+- Plans the Terraform deployment.
+- Applies the Terraform configuration to deploy the infrastructure.
+Make sure to configure the necessary secrets in your GitHub repository settings for AWS credentials and any other sensitive information required by the workflow.
+
+### Github Actions Benefits
+- **Continuous Deployment**: Automatically deploy changes to infrastructure on code updates.
+- **Reduced Manual Effort**: Minimize human error by automating repetitive tasks.
+- **Faster Iterations**: Quickly test and deploy infrastructure changes.
+
+This GitHub Actions workflow automates the process of:
+
+- Building Docker images for Backend and Frontend.
+- Pushing them to AWS Elastic Container Registry (ECR).
+- Triggering a new deployment on AWS ECS (Elastic Container Service).
+- It runs automatically whenever code is pushed to the main branch.
+
+
+### Workflow Sections
+1. **Trigger**: The workflow is triggered on pushes to the `main` branch.
+2. **Jobs**: The workflow consists of a single job named `deploy` that runs on the latest Ubuntu runner.
+3. **Environment Variables**: The job uses environment variables for AWS credentials and region, which should be set as secrets in the GitHub repository.
+        ```bash
+        env:
+            AWS_REGION: ${{ secrets.AWS_REGION }}
+            ECR_BACKEND_URL: ${{ secrets.ECR_BACKEND_URL }}
+            ECR_FRONTEND_URL: ${{ secrets.ECR_FRONTEND_URL }}
+            ECS_CLUSTER_NAME: ${{ secrets.ECS_CLUSTER_NAME }}
+            ECS_SERVICE_NAME: ${{ secrets.ECS_SERVICE_NAME }}
+            ALB_DNS: ${{ secrets.ALB_DNS }}
+        ```
+4. **Checkout Code**: Clones your repository inside the runner so Docker can build from your source code.
+    ```yaml
+    - name: Checkout code
+      uses: actions/checkout@v3
+5. **AWS Credentials**: Configures AWS credentials for the job using the `aws-actions/configure-aws-credentials` action.
+    ```yaml
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      
+    ```
+6. **Backend Docker Build and Push**: Builds the Docker image for the backend service and pushes it to AWS ECR.
+    ```yaml
+    - name: Build and push Backend Docker image
+      run: |
+        cd backend
+        docker build -t $ECR_BACKEND_URL:latest .
+        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_BACKEND_URL
+        docker push $ECR_BACKEND_URL:latest
+    ```
+7. **Frontend Docker Build and Push**: Builds the Docker image for the frontend service and pushes it to AWS ECR.
+    ```yaml
+    - name: Build and push Frontend Docker image
+      run: |
+        cd frontend
+        docker build -t $ECR_FRONTEND_URL:latest .
+        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_FRONTEND_URL
+        docker push $ECR_FRONTEND_URL:latest
+    ```
+8. **Deploy to ECS**: Updates the ECS service to use the new Docker images, triggering a new deployment.
+    ```yaml
+    - name: Deploy to ECS
+      run: |        
+        aws ecs update-service --cluster $ECS_CLUSTER_NAME --service $ECS_SERVICE_NAME --force-new-deployment
+    ```
+
+
+## Automated ECS Deployment via GitHub Actions
+
+This repository uses **GitHub Actions** to automatically build, push, and deploy Docker containers to **AWS ECS**.
+
+---
+
+### How It Works
+1. Push changes to `main` branch.
+2. GitHub Actions:
+   - Builds backend and frontend Docker images.
+   - Pushes images to **AWS ECR**.
+   - Updates ECS service to use the latest images.
+3. ECS automatically replaces old containers with new ones.
+
+---
+
+### Setup Steps
+
+#### 1. Create GitHub Secrets
+Go to `Settings → Secrets → Actions` in your GitHub repository and add the following secrets:
+
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_REGION`
+- `ECR_BACKEND_URL`
+- `ECR_FRONTEND_URL`
+- `ECS_CLUSTER_NAME`
+- `ECS_SERVICE_NAME`
+
+---
+
+#### 2. Folder Structure
+Make sure the project structure looks like this:
+```
+backend/
+  Dockerfile
+  ...
+frontend/
+  Dockerfile
+  ...
+```
+
+---
+
+#### 3. Deploy
+To trigger deployment:
+```bash
+git add .
+git commit -m "Deploy new version"
+git push origin main
+```
+
+---
+
+### Important Notes
+- **ALB DNS** ensures the frontend calls the correct backend API.
+- Each push to `main` triggers a **full redeploy** automatically.
+- Logs for ECS tasks can be checked in **AWS CloudWatch**.
+
+---
+
+### CI/CD Workflow Summary
+- **Build**: Docker images for backend and frontend.
+- **Push**: Pushes images to AWS ECR.
+- **Deploy**: ECS is updated with the latest images.
+
+
+
+### POST Deployment findings
+- Application is accessible via the ALB DNS.
+- Frontend is able to communicate with the backend via the ALB DNS.
+- Docker containers are running successfully in the ECS cluster.
+
+### Issues Faced
+- **Internal Server Error (500)**: Initially faced 500 errors due to incorrect API URL in the frontend. Resolved by providing ECS ALB DNS in the frontend environment variable.
+- **Internal Server Error (500)**: Encountered 500 errors in the backend due following log message:
+    ```
+    Could not retrieve a transcript for the video. This is most likely caused by: YouTube is blocking requests from your IP. This usually is due to one of the following reasons: 
+    - You have done too many requests and your IP has been blocked by YouTube 
+    - You are doing requests from an IP belonging to a cloud provider (like AWS, Google Cloud Platform, Azure, etc.). Unfortunately, most IPs from cloud providers are blocked by YouTube.
+    ```
+
